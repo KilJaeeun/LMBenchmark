@@ -45,7 +45,7 @@ def parse_args() -> argparse.Namespace:
                         help="Output CSV filename (default: %(default)s)")
     parser.add_argument("--log-interval", type=int, default=30,
                         help="Seconds between progress logs (default: %(default)s)")
-    parser.add_argument("--time", type=int,
+    parser.add_argument("--time", type=int, default=100,
                         help="Maximum time to run the benchmark in seconds")
     parser.add_argument("--verbose", action="store_true",
                         help="Enable DEBUG logging")
