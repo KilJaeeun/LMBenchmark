@@ -24,7 +24,7 @@ spec:
           /app/run_benchmarks.sh "$MODEL" "$BASE_URL" "$SAVE_FILE_KEY" "$SCENARIOS" "$QPS_VALUES"
         env:
         - name: HF_TOKEN
-          value : "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
+          value : "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"
         - name: MODEL
           value: "meta-llama/Llama-3.1-8B-Instruct"
         - name: BASE_URL
