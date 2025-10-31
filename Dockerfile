@@ -17,17 +17,18 @@ spec:
           set -euo pipefail
           echo "machine oss.navercorp.com login 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 password x-oauth-basic" > ~/.netrc
           chmod 600 ~/.netrc
-          export HF_TOKEN=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
           rm -rf /app
           git clone https://oss.navercorp.com/jaeeun-kil/LMBenchmark /app
           . ~/.bashrc || true
           . .venv/bin/activate || true
           /app/run_benchmarks.sh "$MODEL" "$BASE_URL" "$SAVE_FILE_KEY" "$SCENARIOS" "$QPS_VALUES"
         env:
+        - name: HF_TOKEN
+          value : "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
         - name: MODEL
           value: "meta-llama/Llama-3.1-8B-Instruct"
         - name: BASE_URL
-          value: "http://vllm-service:8000"  # Replace with your actual service name
+          value: "http://10.233.105.222:8000"  # Replace with your actual service name
         - name: SAVE_FILE_KEY
           value: "benchmark_results"
         - name: SCENARIOS
