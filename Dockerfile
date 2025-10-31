@@ -1,49 +1,45 @@
-# Use Python 3.12 as base image
-FROM python:3.12-slim
-
-# Set working directory
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install uv for Python package management
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    echo 'export PATH="/root/.cargo/bin:$PATH"' >> ~/.bashrc && \
-    . ~/.bashrc
-
-# Copy the benchmark code
-COPY . /app/
-
-# Set environment variables with defaults
-ENV MODEL="meta-llama/Llama-3.1-8B-Instruct" \
-    BASE_URL="http://localhost:8000" \
-    SAVE_FILE_KEY="benchmark_results" \
-    SCENARIOS="all" \
-    QPS_VALUES="1.34" \
-    PYTHONPATH="/app" \
-    PATH="/root/.cargo/bin:$PATH" \
-    NUM_USERS_WARMUP="20" \
-    NUM_USERS="15" \
-    NUM_ROUNDS="20" \
-    SYSTEM_PROMPT="1000" \
-    CHAT_HISTORY="20000" \
-    ANSWER_LEN="100" \
-    INIT_USER_ID="1" \
-    TEST_DURATION="100" \
-    USE_CHAT_COMPLETIONS="False"
-
-# Create a virtual environment and install dependencies
-RUN . ~/.bashrc && \
-    uv venv && \
-    . .venv/bin/activate && \
-    uv pip install -r requirements.txt
-
-# Make the script executable
-RUN chmod +x /app/run_benchmarks.sh
-
-# Set the entrypoint to run the benchmark script
-ENTRYPOINT ["/bin/bash", "-c", ". ~/.bashrc && . .venv/bin/activate && /app/run_benchmarks.sh \"$MODEL\" \"$BASE_URL\" \"$SAVE_FILE_KEY\" \"$SCENARIOS\" \"$QPS_VALUES\""] 
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: benchmark-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: benchmark
+        image: lmcache/lmcache-benchmark:sha-a306df2
+ # Replace with your actual image
+        workingDir: /app
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -euo pipefail
+          echo "machine oss.navercorp.com login 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 password x-oauth-basic" > ~/.netrc
+          chmod 600 ~/.netrc
+          export HF_TOKEN=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
+          rm -rf /app
+          git clone https://oss.navercorp.com/jaeeun-kil/LMBenchmark /app
+          . ~/.bashrc || true
+          . .venv/bin/activate || true
+          /app/run_benchmarks.sh "$MODEL" "$BASE_URL" "$SAVE_FILE_KEY" "$SCENARIOS" "$QPS_VALUES"
+        env:
+        - name: MODEL
+          value: "meta-llama/Llama-3.1-8B-Instruct"
+        - name: BASE_URL
+          value: "http://vllm-service:8000"  # Replace with your actual service name
+        - name: SAVE_FILE_KEY
+          value: "benchmark_results"
+        - name: SCENARIOS
+          value: "all"  # Options: all, sharegpt, short-input, long-input
+        - name: QPS_VALUES
+          value: "1.34 2.0 3.0"  # Space-separated list of QPS values
+        volumeMounts:
+        - name: results-volume
+          mountPath: /app/results
+      volumes:
+      - name: results-volume
+        persistentVolumeClaim:
+          claimName: benchmark-results-pvc  # Replace with your actual PVC
+      restartPolicy: Never
+  backoffLimit: 0  # Don't retry on failure 
