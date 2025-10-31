@@ -40,7 +40,8 @@ spec:
           mountPath: /app/results
       volumes:
       - name: results-volume
-        persistentVolumeClaim:
-          claimName: benchmark-results-pvc  # Replace with your actual PVC
+        hostPath:
+          path: /home/wbl-naver-user1/generative_chatbot/kje/20251028/1/lmcache-benchmrk1
+          type: DirectoryOrCreate
       restartPolicy: Never
   backoffLimit: 0  # Don't retry on failure 
